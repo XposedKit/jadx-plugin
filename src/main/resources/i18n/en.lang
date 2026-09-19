@@ -1,0 +1,8 @@
+plugin.name=XposedKit Extension
+plugin.description=Provides extension features for XposedKit
+
+popup.copy-reflect=Copy XposedKit reflection code
+shortcut.copy-reflect=Shortcut for copying reflection code
+option.advanced-mode=Advanced Mode
+dialog.advanced.title=Advanced Options
+dialog.close=Close
