@@ -1,1 +1,1 @@
-rootProject.name = "jadx-plugin"
+rootProject.name = "xposedkit-jadx-plugin"
