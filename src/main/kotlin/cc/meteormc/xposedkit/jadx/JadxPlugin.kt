@@ -7,6 +7,7 @@ import jadx.api.plugins.JadxPlugin
 import jadx.api.plugins.JadxPluginContext
 import jadx.api.plugins.JadxPluginInfo
 import jadx.api.plugins.JadxPluginInfoBuilder
+import jadx.gui.plugins.context.GuiPluginContext
 
 class JadxPlugin : JadxPlugin {
     companion object {
@@ -21,7 +22,7 @@ class JadxPlugin : JadxPlugin {
         .build()
 
     override fun init(context: JadxPluginContext) {
-        val gui = context.guiContext ?: return
+        val gui = context.guiContext as? GuiPluginContext? ?: return
         context.registerOptions(PluginOptions)
         gui.addPopupMenuAction(
             I18n.str("popup.copy-reflect"),

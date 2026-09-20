@@ -8,12 +8,15 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    google()
 }
 
 dependencies {
-    compileOnly("io.github.skylot:jadx-core:1.5.6")
-    compileOnly("io.github.skylot:jadx-gui:1.5.6")
-    compileOnly("io.github.skylot:jadx-plugins-tools:1.5.6")
+    val jadxCompile = configurations.create("jadxCompile")
+    jadxCompile("io.github.skylot:jadx-core:1.5.6")
+    jadxCompile("io.github.skylot:jadx-gui:1.5.6")
+    jadxCompile("io.github.skylot:jadx-plugins-tools:1.5.6")
+    compileOnly(files(jadxCompile))
 }
 
 kotlin {
