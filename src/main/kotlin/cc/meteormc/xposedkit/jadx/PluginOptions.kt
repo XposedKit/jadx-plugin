@@ -16,11 +16,11 @@ object PluginOptions : BasePluginOptionsBuilder() {
         private set
 
     override fun registerOptions() {
-        shortcutOption("shortcut.copy-reflect")
-            .description(I18n.str("shortcut.copy-reflect"))
+        shortcutOption("copy-reflect-shortcut")
+            .description(I18n.str("option.copy-reflect"))
             .defaultValue("K")
             .setter { copyReflectShortcut = it }
-        boolOption("option.advanced-mode")
+        boolOption("advanced-mode")
             .description(I18n.str("option.advanced-mode"))
             .defaultValue(false)
             .setter { advancedMode = it}

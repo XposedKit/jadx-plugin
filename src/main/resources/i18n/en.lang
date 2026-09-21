@@ -2,9 +2,14 @@ plugin.name=XposedKit Extension
 plugin.description=Provides extension features for XposedKit
 
 popup.copy-reflect=Copy XposedKit reflection code
-shortcut.copy-reflect=Shortcut for copying reflection code
+option.copy-reflect=Shortcut for copying reflection code
 option.advanced-mode=Advanced Mode
 advanced-dialog.title=Advanced
+advanced-dialog.options=Generation Options
+advanced-dialog.standard-matching=Standard Matching
+advanced-dialog.exact-matching=Exact Matching
+advanced-dialog.feature-matching=Feature Matching
+advanced-dialog.use-lambda=Use Lambda Expressions
 advanced-dialog.preview=Code Preview
 advanced-dialog.copy=Copy
 advanced-dialog.cancel=Cancel

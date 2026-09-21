@@ -1,12 +1,18 @@
 package cc.meteormc.xposedkit.jadx
 
+import cc.meteormc.xposedkit.jadx.generator.ClassReflectGenerator
+import cc.meteormc.xposedkit.jadx.generator.FieldReflectGenerator
+import cc.meteormc.xposedkit.jadx.generator.MethodReflectGenerator
 import cc.meteormc.xposedkit.jadx.ui.AdvancedDialog
 import cc.meteormc.xposedkit.jadx.util.I18n
-import cc.meteormc.xposedkit.jadx.util.KeyboardManager
 import jadx.api.plugins.JadxPlugin
 import jadx.api.plugins.JadxPluginContext
 import jadx.api.plugins.JadxPluginInfo
 import jadx.api.plugins.JadxPluginInfoBuilder
+import jadx.core.dex.nodes.ClassNode
+import jadx.core.dex.nodes.FieldNode
+import jadx.core.dex.nodes.ICodeNode
+import jadx.core.dex.nodes.MethodNode
 import jadx.gui.plugins.context.GuiPluginContext
 
 class JadxPlugin : JadxPlugin {
@@ -26,18 +32,25 @@ class JadxPlugin : JadxPlugin {
         context.registerOptions(PluginOptions)
         gui.addPopupMenuAction(
             I18n.str("popup.copy-reflect"),
-            { ReflectCodeGenerator.isSupportedNode(it) },
+            { it is ICodeNode },
             PluginOptions.copyReflectShortcut
         ) { node ->
-            if (!PluginOptions.advancedMode || !KeyboardManager.isShiftDown) {
-                val code = ReflectCodeGenerator.generate(node)
-                gui.copyToClipboard(code)
+            if (node !is ICodeNode) {
                 return@addPopupMenuAction
             }
 
-            AdvancedDialog(gui).show()
-        }
+            if (PluginOptions.advancedMode) {
+                AdvancedDialog(node, gui).show()
+                return@addPopupMenuAction
+            }
 
-        KeyboardManager.init()
+            val code = when (node) {
+                is ClassNode -> ClassReflectGenerator.generate(node)
+                is MethodNode -> MethodReflectGenerator.generate(node)
+                is FieldNode -> FieldReflectGenerator.generate(node)
+                else -> return@addPopupMenuAction
+            }
+            gui.copyToClipboard(code)
+        }
     }
 }

@@ -2,9 +2,14 @@ plugin.name=XposedKit 擴展
 plugin.description=提供關於 XposedKit 的擴展功能
 
 popup.copy-reflect=複製 XposedKit 反射代碼
-shortcut.copy-reflect=複製反射代碼快捷鍵
+option.copy-reflect=複製反射代碼快捷鍵
 option.advanced-mode=高級模式
 advanced-dialog.title=高級選項
+advanced-dialog.options=生成設置
+advanced-dialog.standard-matching=標準匹配
+advanced-dialog.exact-matching=精確匹配
+advanced-dialog.feature-matching=特徵匹配
+advanced-dialog.use-lambda=使用Lambda表達式
 advanced-dialog.preview=代碼預覽
 advanced-dialog.copy=複製
 advanced-dialog.cancel=取消
