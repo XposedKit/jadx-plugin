@@ -132,7 +132,6 @@ class AdvancedDialog(
         val scrollPane = RTextScrollPane(codeArea)
         scrollPane.lineNumbersEnabled = false
         scrollPane.border = BorderFactory.createEmptyBorder()
-        scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
 
         val previewPanel = JPanel(BorderLayout())
         previewPanel.setBorder(BorderFactory.createTitledBorder(I18n.str("advanced-dialog.preview")))
