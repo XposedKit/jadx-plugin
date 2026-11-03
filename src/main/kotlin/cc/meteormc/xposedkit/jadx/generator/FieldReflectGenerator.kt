@@ -1,6 +1,7 @@
 package cc.meteormc.xposedkit.jadx.generator
 
 import cc.meteormc.xposedkit.jadx.data.MatchMode
+import jadx.core.dex.attributes.AFlag
 import jadx.core.dex.nodes.FieldNode
 import java.util.EnumSet
 
@@ -14,18 +15,29 @@ object FieldReflectGenerator : BaseGenerator<FieldNode>() {
         val codeBuilder = StringBuilder()
         if (mode == MatchMode.FEATURE) {
             val fields = clazz.fields
-            val accFlags = node.accessFlags.rawValue()
-            when {
-                fields.noneNode(node) { it.type typeEquals node.type } -> {
-                    codeBuilder.append("fields(${node.type.toReference()}).first()")
-                }
-                fields.noneNode(node) { it.accessFlags.rawValue() == accFlags } -> {
-                    codeBuilder.append("declaredFields.first { it.modifiers == ${accFlags.toModifiers()} }")
-                }
-                fields.noneNode(node) {
-                    it.type typeEquals node.type && it.accessFlags.rawValue() == accFlags
-                } -> {
-                    codeBuilder.append("declaredFields.first { it.type == ${node.type.toReference()} && it.modifiers == ${accFlags.toModifiers()} }")
+            if (fields.noneNode(node) { it.type typeEquals node.type }) {
+                codeBuilder.append("field(${node.type.toReference()})")
+            } else {
+                val features = fields.findUnique(
+                    node,
+                    FeatureInfo("type = ${node.type.toReference()}") {
+                        it.type typeEquals node.type
+                    },
+                    FeatureInfo("modifiers = ${node.accessFlags.rawValue().toModifiers()}") {
+                        it.accessFlags.rawValue() == node.accessFlags.rawValue()
+                    },
+                    FeatureInfo("isSynthetic = ${node.contains(AFlag.SYNTHETIC)}") {
+                        it.contains(AFlag.SYNTHETIC) == node.contains(AFlag.SYNTHETIC)
+                    }
+                )
+                if (features.isNotEmpty()) {
+                    codeBuilder.append(
+                        """
+                        field {
+                            ${features.joinToString("\n")}
+                        }
+                        """.trimIndent()
+                    )
                 }
             }
         }

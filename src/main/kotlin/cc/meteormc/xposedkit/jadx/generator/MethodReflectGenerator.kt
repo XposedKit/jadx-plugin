@@ -1,6 +1,7 @@
 package cc.meteormc.xposedkit.jadx.generator
 
 import cc.meteormc.xposedkit.jadx.data.MatchMode
+import jadx.core.dex.attributes.AFlag
 import jadx.core.dex.instructions.args.ArgType
 import jadx.core.dex.nodes.MethodNode
 import java.util.EnumSet
@@ -11,63 +12,17 @@ object MethodReflectGenerator : BaseGenerator<MethodNode>() {
         mode: MatchMode,
         useLambda: Boolean
     ): String {
-        val params = node.argTypes
         val clazz = node.declaringClass
+        val isConstructor = node.isConstructor
 
-        val methods = clazz.methods
-        val constructors = methods.filter { it.isConstructor }
         val rawName = clazz.rawName()
-        if (mode == MatchMode.FEATURE) {
-            if (node.isConstructor) {
-                if (constructors.singleOrNull() == node) {
-                    return rawName.createSnippet(
-                        "declaredConstructors.single()",
-                        useLambda
-                    )
-                }
-            } else {
-                when {
-                    methods.noneNode(node) { it.returnType typeEquals node.returnType } -> {
-                        return rawName.createSnippet(
-                            "declaredMethods.first { it.returnType == ${node.returnType.toReference()} }",
-                            useLambda
-                        )
-                    }
-                    methods.noneNode(node) { it.argTypes == params } -> {
-                        val code = node.internalGenerate(prefix = "method", withName = false, withParams = true)
-                        return rawName.createSnippet(code, useLambda)
-                    }
-                    methods.noneNode(node) { it.argTypes.size == params.size } -> {
-                        return rawName.createSnippet(
-                            "declaredMethods.first { it.parameterCount == ${params.size} }",
-                            useLambda
-                        )
-                    }
-                    methods.noneNode(node) {
-                        it.returnType typeEquals node.returnType && it.argTypes == params
-                    } -> {
-                        val code = node.internalGenerate(prefix = "methods", withName = false, withParams = true)
-                        return rawName.createSnippet(
-                            "$code.first {\n    it.returnType == ${node.returnType.toReference()}\n}",
-                            useLambda
-                        )
-                    }
-                    methods.noneNode(node) {
-                        it.returnType typeEquals node.returnType && it.argTypes.size == params.size
-                    } -> {
-                        return rawName.createSnippet(
-                            "declaredMethods.first { it.returnType == ${node.returnType.toReference()} && it.parameterCount == ${params.size} }",
-                            useLambda
-                        )
-                    }
-                }
-            }
-        }
+        val constructors = clazz.methods.filter { it.isConstructor }
+        val methods = clazz.methods.filterNot { it.isConstructor }
 
         val prefix: String
         var withName: Boolean
         var withParams: Boolean
-        if (node.isConstructor) {
+        if (isConstructor) {
             prefix = "constructor"
             withName = false
             withParams = true
@@ -77,10 +32,60 @@ object MethodReflectGenerator : BaseGenerator<MethodNode>() {
             withParams = mode == MatchMode.EXACT || shouldUseExact(node)
         }
 
+        if (mode == MatchMode.FEATURE) {
+            if (isConstructor && constructors.singleOrNull() == node) {
+                return rawName.createSnippet(
+                    "declaredConstructors.single()",
+                    useLambda
+                )
+            } else {
+                val target = if (isConstructor) constructors else methods
+                val features = target.findUnique(node, *buildFeatures(node))
+                if (features.isNotEmpty()) {
+                    return rawName.createSnippet(
+                        """
+                        $prefix {
+                            ${features.joinToString("\n")}
+                        }
+                        """.trimIndent(),
+                        useLambda
+                    )
+                }
+            }
+        }
+
         return rawName.createSnippet(
             node.internalGenerate(prefix, withName, withParams),
             useLambda
         )
+    }
+
+    private fun buildFeatures(node: MethodNode): Array<FeatureInfo<MethodNode>> {
+        var features = arrayOf<FeatureInfo<MethodNode>>(
+            FeatureInfo("modifiers = ${node.accessFlags.rawValue().toModifiers()}") {
+                it.accessFlags.rawValue() == node.accessFlags.rawValue()
+            },
+            FeatureInfo("paramTypes = ${node.argTypes.toReference()}") {
+                it.argTypes.zip(node.argTypes).all { (actual, expected) -> actual typeEquals expected }
+            },
+            FeatureInfo("paramCount = ${node.argTypes.size}") {
+                it.argTypes.size == node.argTypes.size
+            },
+            FeatureInfo("isSynthetic = ${node.contains(AFlag.SYNTHETIC)}") {
+                it.contains(AFlag.SYNTHETIC) == node.contains(AFlag.SYNTHETIC)
+            }
+        )
+        if (!node.isConstructor) {
+            features += arrayOf(
+                FeatureInfo("returnType = ${node.returnType.toReference()}") {
+                    it.returnType typeEquals node.returnType
+                },
+                FeatureInfo("isBridge = ${node.accessFlags.isBridge}") {
+                    it.accessFlags.isBridge == node.accessFlags.isBridge
+                }
+            )
+        }
+        return features
     }
 
     private fun MethodNode.internalGenerate(prefix: String, withName: Boolean, withParams: Boolean): String {

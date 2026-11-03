@@ -47,6 +47,20 @@ abstract class BaseGenerator<T : ICodeNode> {
         return none { it != self && predicate(it) }
     }
 
+    protected fun <T : ICodeNode> Iterable<T>.findUnique(node: T, vararg features: FeatureInfo<T>): List<String> {
+        for (size in 1..features.size) {
+            features.combinations(size).firstOrNull { selected ->
+                noneNode(node) { target ->
+                    selected.all { it.matches(target) }
+                }
+            }?.let {
+                return it.map { feature -> feature.code }
+            }
+        }
+
+        return emptyList()
+    }
+
     protected fun Int.toModifiers(): String {
         return (this and 0xffff).toHexString(HexFormat {
             upperCase = true
@@ -112,6 +126,11 @@ abstract class BaseGenerator<T : ICodeNode> {
         }
     }
 
+    protected fun List<ArgType>.toReference(): String {
+        if (isEmpty()) return "emptyArray()"
+        return "arrayOf(\n${joinToString(",\n") { it.toReference().prependIndent("    ") }}\n)"
+    }
+
     protected fun String.formatReference(toClass: Boolean): String {
         val suffix: String
         // 从BootClassLoader加载的类可以直接引用类型
@@ -140,6 +159,31 @@ abstract class BaseGenerator<T : ICodeNode> {
             is MethodNode -> renameCondition.shouldRename(this)
             is FieldNode -> renameCondition.shouldRename(this)
             else -> false
+        }
+    }
+
+    protected class FeatureInfo<T : ICodeNode>(
+        val code: String,
+        val matches: (T) -> Boolean
+    )
+
+    private fun <T> Array<T>.combinations(size: Int) = sequence {
+        suspend fun SequenceScope<List<T>>.collect(
+            start: Int,
+            selected: List<T>
+        ) {
+            if (selected.size == size) {
+                yield(selected)
+                return
+            }
+
+            for (i in start until this@combinations.size) {
+                collect(i + 1, selected + this@combinations[i])
+            }
+        }
+
+        if (size in 0..this@combinations.size) {
+            collect(0, emptyList())
         }
     }
 }
