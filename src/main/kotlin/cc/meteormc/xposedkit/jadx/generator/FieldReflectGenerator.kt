@@ -32,11 +32,7 @@ object FieldReflectGenerator : BaseGenerator<FieldNode>() {
                 )
                 if (features.isNotEmpty()) {
                     codeBuilder.append(
-                        """
-                        field {
-                            ${features.joinToString("\n")}
-                        }
-                        """.trimIndent()
+                        "field {\n${features.joinToString("\n").prependIndent("    ")}\n}"
                     )
                 }
             }

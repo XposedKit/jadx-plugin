@@ -7,8 +7,9 @@ import jadx.core.dex.nodes.ClassNode
 import jadx.core.dex.nodes.FieldNode
 import jadx.core.dex.nodes.ICodeNode
 import jadx.core.dex.nodes.MethodNode
+import java.lang.reflect.Modifier
 import java.util.EnumSet
-import kotlin.text.toHexString
+import java.util.StringJoiner
 
 abstract class BaseGenerator<T : ICodeNode> {
     private val renameCondition = JadxRenameConditions.buildDefault()
@@ -62,10 +63,20 @@ abstract class BaseGenerator<T : ICodeNode> {
     }
 
     protected fun Int.toModifiers(): String {
-        return (this and 0xffff).toHexString(HexFormat {
-            upperCase = true
-            number.prefix = "0x"
-        })
+        val joiner = StringJoiner(" or ")
+        if (Modifier.isPublic(this)) joiner.add("Modifier.PUBLIC")
+        if (Modifier.isProtected(this)) joiner.add("Modifier.PROTECTED")
+        if (Modifier.isPrivate(this)) joiner.add("Modifier.PRIVATE")
+        if (Modifier.isAbstract(this)) joiner.add("Modifier.ABSTRACT")
+        if (Modifier.isStatic(this)) joiner.add("Modifier.STATIC")
+        if (Modifier.isFinal(this)) joiner.add("Modifier.FINAL")
+        if (Modifier.isTransient(this)) joiner.add("Modifier.TRANSIENT")
+        if (Modifier.isVolatile(this)) joiner.add("Modifier.VOLATILE")
+        if (Modifier.isSynchronized(this)) joiner.add("Modifier.SYNCHRONIZED")
+        if (Modifier.isNative(this)) joiner.add("Modifier.NATIVE")
+        if (Modifier.isStrict(this)) joiner.add("Modifier.STRICT")
+        if (Modifier.isInterface(this)) joiner.add("Modifier.INTERFACE")
+        return joiner.toString()
     }
 
     protected fun ClassNode.rawName(): String {

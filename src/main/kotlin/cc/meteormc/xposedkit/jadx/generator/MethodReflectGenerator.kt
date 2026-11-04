@@ -43,11 +43,7 @@ object MethodReflectGenerator : BaseGenerator<MethodNode>() {
                 val features = target.findUnique(node, *buildFeatures(node))
                 if (features.isNotEmpty()) {
                     return rawName.createSnippet(
-                        """
-                        $prefix {
-                            ${features.joinToString("\n")}
-                        }
-                        """.trimIndent(),
+                        "$prefix {\n${features.joinToString("\n").prependIndent("    ")}\n}",
                         useLambda
                     )
                 }
@@ -61,31 +57,40 @@ object MethodReflectGenerator : BaseGenerator<MethodNode>() {
     }
 
     private fun buildFeatures(node: MethodNode): Array<FeatureInfo<MethodNode>> {
-        var features = arrayOf<FeatureInfo<MethodNode>>(
-            FeatureInfo("modifiers = ${node.accessFlags.rawValue().toModifiers()}") {
-                it.accessFlags.rawValue() == node.accessFlags.rawValue()
-            },
+        val features = mutableListOf<FeatureInfo<MethodNode>>()
+        features.add(
             FeatureInfo("paramTypes = ${node.argTypes.toReference()}") {
                 it.argTypes.zip(node.argTypes).all { (actual, expected) -> actual typeEquals expected }
-            },
+            }
+        )
+        features.add(
             FeatureInfo("paramCount = ${node.argTypes.size}") {
                 it.argTypes.size == node.argTypes.size
-            },
-            FeatureInfo("isSynthetic = ${node.contains(AFlag.SYNTHETIC)}") {
-                it.contains(AFlag.SYNTHETIC) == node.contains(AFlag.SYNTHETIC)
             }
         )
         if (!node.isConstructor) {
-            features += arrayOf(
+            features.add(
                 FeatureInfo("returnType = ${node.returnType.toReference()}") {
                     it.returnType typeEquals node.returnType
-                },
+                }
+            )
+            features.add(
                 FeatureInfo("isBridge = ${node.accessFlags.isBridge}") {
                     it.accessFlags.isBridge == node.accessFlags.isBridge
                 }
             )
         }
-        return features
+        features.add(
+            FeatureInfo("modifiers = ${node.accessFlags.rawValue().toModifiers()}") {
+                it.accessFlags.rawValue() == node.accessFlags.rawValue()
+            }
+        )
+        features.add(
+            FeatureInfo("isSynthetic = ${node.contains(AFlag.SYNTHETIC)}") {
+                it.contains(AFlag.SYNTHETIC) == node.contains(AFlag.SYNTHETIC)
+            }
+        )
+        return features.toTypedArray()
     }
 
     private fun MethodNode.internalGenerate(prefix: String, withName: Boolean, withParams: Boolean): String {
